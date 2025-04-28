@@ -1,0 +1,47 @@
+class axi_slave_read_driver extends uvm_driver #(axi_read_transaction);
+  `uvm_component_utils(axi_slave_read_driver)
+
+  virtual axi_if vif;
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  task reset_signals();
+    vif.arready <= 0;
+    vif.rvalid  <= 0;
+    vif.rlast   <= 0;
+    vif.rresp   <= 0;
+    vif.rdata   <= 0;
+    vif.rid     <= 0;
+  endtask
+
+  task run_phase(uvm_phase phase);
+    axi_read_transaction tr;
+
+    reset_signals();
+
+    forever begin
+
+      vif.arready <= 1;
+      @(posedge vif.clk iff (vif.arvalid && vif.arready));
+      vif.arready <= 0;
+
+      tr = axi_read_transaction::type_id::create("tr");
+      tr.addr = vif.araddr;
+      tr.id   = vif.arid;
+
+      vif.rvalid <= 1;
+      vif.rdata  <= 32'h12345678;  // Dummy data
+      vif.rid    <= tr.id;
+      vif.rresp  <= 2'b00;         // OKAY
+      vif.rlast  <= 1;
+
+      @(posedge vif.clk iff (vif.rready && vif.rvalid));
+
+      vif.rvalid <= 0;
+      vif.rlast  <= 0;
+
+         end
+  endtask
+endclass
