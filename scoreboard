@@ -1,0 +1,78 @@
+class axi_slave_read_scoreboard extends uvm_scoreboard;
+
+  `uvm_component_utils(axi_slave_read_scoreboard)
+
+  uvm_analysis_imp_ar #(axi_read_xtn, axi_slave_read_scoreboard) aport_ar;
+  uvm_analysis_imp_r  #(axi_read_xtn, axi_slave_read_scoreboard) aport_r;
+
+  uvm_tlm_fifo #(axi_read_xtn) arfifo;
+  uvm_tlm_fifo #(axi_read_xtn) rfifo;
+
+  int VECT_CNT, PASS_CNT, ERROR_CNT;
+
+  function new(string name="axi_slave_read_scoreboard", uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    aport_ar = new("aport_ar", this);
+    aport_r  = new("aport_r", this);
+    arfifo   = new("arfifo", this);
+    rfifo    = new("rfifo", this);
+  endfunction
+
+  function void write_ar(axi_read_xtn tr);
+    `uvm_info("SLV_SB_AR", $sformatf("Received AR: %s", tr.convert2string()), UVM_MEDIUM)
+    void'(arfifo.try_put(tr));
+  endfunction
+
+  function void write_r(axi_read_xtn tr);
+    `uvm_info("SLV_SB_R", $sformatf("Received R: %s", tr.convert2string()), UVM_MEDIUM)
+    void'(rfifo.try_put(tr));
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    axi_read_xtn ar_tr, r_tr;
+    forever begin
+      arfifo.get(ar_tr);
+      rfifo.get(r_tr);
+
+      VECT_CNT++;
+
+      if (ar_tr.arid !== r_tr.rid) begin
+        ERROR();
+        `uvm_error("SLV_SB", $sformatf("ID MISMATCH: ARID=%0h, RID=%0h", ar_tr.arid, r_tr.rid))
+      end else if (ar_tr.arlen+1 != r_tr.data.size()) begin
+        ERROR();
+        `uvm_error("SLV_SB", $sformatf("BURST LENGTH MISMATCH: Expected %0d beats, got %0d", 
+                      ar_tr.arlen+1, r_tr.data.size()))
+      end else begin
+        bit all_okay = 1;
+        foreach (r_tr.rresp[i]) begin
+          if (r_tr.rresp[i] !== 2'b00) begin
+            all_okay = 0;
+            `uvm_warning("SLV_SB", $sformatf("RRESP[%0d] = %b (not OKAY)", i, r_tr.rresp[i]))
+          end
+        end
+
+        if (all_okay) begin
+          PASS();
+          `uvm_info("SLV_SB", "Read response PASS", UVM_MEDIUM)
+        end else begin
+          ERROR();
+          `uvm_error("SLV_SB", "Read response contained error(s)")
+        end
+      end
+    end
+  endtask
+
+  function void PASS();
+    PASS_CNT++;
+  endfunction
+
+  function void ERROR();
+    ERROR_CNT++;
+  endfunction
+
+endclass
