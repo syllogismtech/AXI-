@@ -1,0 +1,45 @@
+class axi_read_monitor extends uvm_monitor;
+  `uvm_component_utils(axi_read_monitor)
+
+  virtual axi_if vif;
+  uvm_analysis_port#(read_transaction) ap;
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+    ap = new("ap", this);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    if (!uvm_config_db#(virtual axi_if)::get(this, "", "vif", vif)) begin
+      `uvm_fatal("NOVIF", "Virtual interface not set for axi_read_monitor")
+    end
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    read_transaction tr;
+
+    forever begin
+      @(posedge vif.ACLK);
+      if (vif.ARVALID && vif.ARREADY) begin
+        tr = read_transaction::type_id::create("tr");
+        tr.addr = vif.ARADDR;
+        tr.len  = vif.ARLEN;
+        tr.data = new[tr.len + 1];
+
+        int idx = 0;
+        while (idx <= tr.len) begin
+          @(posedge vif.ACLK);
+          if (vif.RVALID) begin
+            tr.data[idx] = vif.RDATA;
+            if (vif.RLAST) begin
+              ap.write(tr);
+              break;
+            end
+            idx++;
+          end
+        end
+      end
+    end
+  endtask
+endclass
