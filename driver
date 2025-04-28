@@ -1,0 +1,61 @@
+class axi_read_master_driver extends uvm_driver#(read_transaction);
+  `uvm_component_utils(axi_read_master_driver)
+
+  virtual axi_if vif;
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    if (!uvm_config_db#(virtual axi_if)::get(this, "", "vif", vif)) begin
+      `uvm_fatal("NOVIF", "Virtual interface not set for axi_read_master_driver")
+    end
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    read_transaction tr;
+
+    vif.ARVALID <= 0;
+    vif.ARADDR  <= '0;
+    vif.ARLEN   <= 0;
+    vif.RREADY  <= 0;
+
+    forever begin
+      seq_item_port.get_next_item(tr);
+
+      vif.ARADDR  <= tr.addr;
+      vif.ARLEN   <= tr.len;
+      vif.ARVALID <= 1;
+
+      @(posedge vif.ACLK);
+      while (!vif.ARREADY) @(posedge vif.ACLK);
+
+      vif.ARVALID <= 0;
+
+      tr.data = new[tr.len + 1];
+      int idx = 0;
+
+      while (idx <= tr.len) begin
+        @(posedge vif.ACLK);
+        if (vif.RVALID) begin
+          tr.data[idx] = vif.RDATA;
+          vif.RREADY <= 1;
+
+          if (vif.RLAST) begin
+            idx++;
+            break;
+          end
+          idx++;
+        end else begin
+          vif.RREADY <= 0;
+        end
+      end
+
+      vif.RREADY <= 0;
+
+      seq_item_port.item_done();
+    end
+  endtask
+endclass
