@@ -1,0 +1,74 @@
+class axi_read_scoreboard extends uvm_scoreboard;
+
+  `uvm_component_utils(axi_read_scoreboard)
+
+  uvm_analysis_imp_ar #(axi_read_xtn, axi_read_scoreboard) ar_port;
+  uvm_analysis_imp_r  #(axi_read_xtn, axi_read_scoreboard) r_port;
+
+  uvm_tlm_fifo #(axi_read_xtn) ar_fifo;
+  uvm_tlm_fifo #(axi_read_xtn) r_fifo;
+
+  int VECT_CNT, PASS_CNT, ERROR_CNT;
+
+  function new(string name = "axi_read_scoreboard", uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    ar_port = new("ar_port", this);
+    r_port  = new("r_port", this);
+    ar_fifo = new("ar_fifo", this);
+    r_fifo  = new("r_fifo", this);
+  endfunction
+
+  function void write_ar(axi_read_xtn tr);
+    `uvm_info("SCOREBOARD_AR", tr.convert2string(), UVM_MEDIUM)
+    void'(ar_fifo.try_put(tr));
+  endfunction
+
+  function void write_r(axi_read_xtn tr);
+    `uvm_info("SCOREBOARD_R", tr.convert2string(), UVM_MEDIUM)
+    void'(r_fifo.try_put(tr));
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    axi_read_xtn ar_tr, r_tr;
+
+    forever begin
+      `uvm_info("SCOREBOARD", "Waiting for AR transaction", UVM_DEBUG)
+      ar_fifo.get(ar_tr);
+      `uvm_info("SCOREBOARD", "Waiting for R transaction", UVM_DEBUG)
+      r_fifo.get(r_tr);
+
+      if ((ar_tr.arid != r_tr.arid) || (r_tr.data.size() != ar_tr.arlen + 1)) begin
+        ERROR();
+        `uvm_error("AXI_SCOREBOARD", $sformatf("Mismatch in transaction ID or burst length. ARID=%0h, RID=%0h", ar_tr.arid, r_tr.arid))
+      end else begin
+        bit error_flag = 0;
+        foreach (r_tr.data[i]) begin
+          if (r_tr.rresp[i] !== 2'b00) begin
+            error_flag = 1;
+            `uvm_error("AXI_SCOREBOARD", $sformatf("Read error response at beat %0d: RRESP=%0b", i, r_tr.rresp[i]))
+          end
+        end
+
+        if (!error_flag) begin
+          PASS();
+          `uvm_info("AXI_SCOREBOARD", $sformatf("Read OK for ID=%0h, beats=%0d", r_tr.arid, r_tr.data.size()), UVM_LOW)
+        end
+      end
+    end
+  endtask
+
+  function void PASS();
+    VECT_CNT++;
+    PASS_CNT++;
+  endfunction
+
+  function void ERROR();
+    VECT_CNT++;
+    ERROR_CNT++;
+  endfunction
+
+endclass
