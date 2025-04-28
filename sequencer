@@ -1,0 +1,24 @@
+class axi_slave_read_seq extends uvm_sequence #(axi_transaction);
+
+  `uvm_object_utils(axi_slave_read_seq)
+
+  function new(string name = "axi_slave_read_seq");
+    super.new(name);
+  endfunction
+
+  task body();
+    axi_transaction tx;
+    tx = axi_transaction::type_id::create("tx");
+
+    for (int i = 0; i < tx.ARLEN + 1; i++) begin
+      tx.RDATA  = $random;
+      tx.RRESP  = 2'b00;
+      tx.RLAST  = (i == tx.ARLEN);
+      tx.RVALID = 1'b1;
+      `uvm_info(get_type_name(), $sformatf("Sending RDATA: %0h, RLAST: %0b", tx.RDATA, tx.RLAST), UVM_MEDIUM)
+      start_item(tx);
+      finish_item(tx);
+    end
+  endtask
+
+endclass
