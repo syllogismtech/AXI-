@@ -1,0 +1,31 @@
+class axi_read_seq extends uvm_sequence #(axi_transaction);
+
+  `uvm_object_utils(axi_read_seq)
+
+  rand bit [31:0] addr;
+  rand bit [7:0]  length = 4;
+
+  function new(string name = "axi_read_seq");
+    super.new(name);
+  endfunction
+
+  virtual task body();
+    axi_transaction tr;
+    tr = axi_transaction::type_id::create("tr");
+
+    start_item(tr);
+
+    tr.trans_type = axi_transaction::READ;
+    tr.araddr     = addr;
+    tr.arlen      = length - 1;
+    tr.arsize     = 3;
+    tr.arburst    = 2'b01;
+
+    finish_item(tr);
+
+    `uvm_info(get_type_name(),
+              $sformatf("AXI READ: addr=0x%08x len=%0d", tr.araddr, tr.arlen),
+              UVM_MEDIUM)
+  endtask
+
+endclass
