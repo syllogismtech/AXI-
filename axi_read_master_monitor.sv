@@ -1,5 +1,5 @@
 class axi_read_master_monitor extends uvm_monitor;
-  virtual axi_if vif;
+  virtual read_monitor vif;
   uvm_analysis_port #(axi_read_master_transaction) m_ap;
 
   `uvm_component_utils(axi_read_master_monitor)
@@ -17,7 +17,6 @@ class axi_read_master_monitor extends uvm_monitor;
   task run_phase(uvm_phase phase);
     axi_read_master_transaction tx;
     forever begin
-      tr=axi_read_master_transaction::type_id::create("tr");
       @(posedge vif.clk);
       if (vif.arvalid && vif.arready) begin
         tx = axi_read_item::type_id::create("tx");
