@@ -1,6 +1,6 @@
 interface read_interface #(parameter ADDR_WIDTH = 32, DATA_WIDTH = 64, ID_WIDTH = 4); 
-  logic ACLK;
-  logic ARESETn;
+  logic clk;
+  logic reset;
 
   logic [ADDR_WIDTH-1:0]   ARADDR;
   logic [7:0]              ARLEN;
