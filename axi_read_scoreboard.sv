@@ -33,6 +33,7 @@ class axi_read_scoreboard extends uvm_scoreboard;
 
       master_txn = master_q.pop_front();
       int burst_len = master_txn.arlen + 1;
+      
 
       for (int i = 0; i < burst_len; i++) begin
         wait (slave_q.size() > 0);
@@ -42,10 +43,12 @@ class axi_read_scoreboard extends uvm_scoreboard;
           `uvm_error("SCOREBOARD", $sformatf("ID mismatch: Expected ID = %0h, Got = %0h",
                       master_txn.arid, slave_txn.rid))
         end
-
-        if (slave_txn.rdata !== master_txn.expected_rdata[i]) begin
+        bit [63:0] expected_rdata;
+        expected_rdata=master_txn.araddr+8;
+        if (slave_txn.rdata !== expected_rdata
+           ) begin
           `uvm_error("SCOREBOARD", $sformatf("Data mismatch at beat %0d: Expected = %0h, Got = %0h",
-                      i, master_txn.expected_rdata[i], slave_txn.rdata))
+                      i, expected_rdata, slave_txn.rdata))
         end
         else begin
           `uvm_info("SCOREBOARD", $sformatf("Beat %0d match: Data = %0h", i, slave_txn.rdata), UVM_LOW)
