@@ -22,7 +22,7 @@ class axi_read_slave_driver extends uvm_driver #(axi_read_slave_transaction);
 
         
         for (int i = 0; i <= burst_len; i++) begin
-          vif.rdata  <= $urandom();
+          vif.rdata  <= vif.araddr+8;
           vif.rvalid <= 1;
           vif.rlast  <= (i == burst_len);
           vif.rid <=read_id;
