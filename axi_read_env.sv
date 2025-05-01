@@ -18,8 +18,9 @@ class axi_read_env extends uvm_env;
 
   function void connect_phase(uvm_phase phase);
     super.connect_phase(phase);
-    m_agt.mon.m_ap.connect(scb.m_scb);
-    s_agt.mon.s_ap.connect(scb.m_scb);
+    m_agt.m_mon.m_ap.connect(scb.m_scb);
+    s_agt.s_mon.s_ap.connect(scb.s_scb);
   endfunction
   
 endclass
+
