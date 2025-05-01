@@ -18,9 +18,24 @@
 
 
 module testbench;
-  read_interface in();  
+  bit clk;
+  bit reset;
+  
+
+  initial begin
+    clk=0;
+    forever #5 clk = ~clk; 
+  end
+
+  initial begin
+    reset = 0;
+    #2 reset =1;
+  end
+  read_interface in(clk,reset);  
 
   dut u_dut (
+    .clk      (in.clk),
+    .reset    (in.reset),
     .araddr   (in.araddr),
     .arlen    (in.arlen),
     .arvalid  (in.arvalid),
@@ -41,3 +56,4 @@ module testbench;
   end
 
 endmodule
+
