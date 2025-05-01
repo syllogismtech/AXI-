@@ -5,6 +5,7 @@ class axi_read_master_transaction extends uvm_sequence_item;
   rand bit [2:0] arsize;
   rand bit [1:0] arburst;
   bit arready;
+  bit arvalid;
   
   function new(string name ="axi_read_master_transaction");
     super.new(name);
