@@ -10,8 +10,8 @@ class axi_read_scoreboard extends uvm_scoreboard;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
-    master_ap = new("master_ap", this);
-    slave_ap  = new("slave_ap", this);
+    m_scb = new("m_scb", this);
+    s_scb  = new("s_scb", this);
   endfunction
 
   function void write(axi_read_master_transaction t);
