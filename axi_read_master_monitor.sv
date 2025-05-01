@@ -1,5 +1,5 @@
 class axi_read_master_monitor extends uvm_monitor;
-  virtual read_monitor vif;
+  virtual read_interface vif;
   uvm_analysis_port #(axi_read_master_transaction) m_ap;
 
   `uvm_component_utils(axi_read_master_monitor)
