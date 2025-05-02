@@ -7,7 +7,7 @@ class axi_read_slave_driver extends uvm_driver #(axi_read_slave_transaction);
   endfunction
 
   function void build_phase(uvm_phase phase);
-    if (!uvm_config_db #(virtual axi_if)::get(this, "", "vif", vif))
+    if (!uvm_config_db #(virtual read_interface)::get(this, "", "vif", vif))
       `uvm_fatal("SLV_DRV", "Interface not found")
   endfunction
 
