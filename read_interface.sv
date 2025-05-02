@@ -10,7 +10,7 @@ interface read_interface #(parameter ADDR_WIDTH = 32, DATA_WIDTH = 64, ID_WIDTH 
   logic                    ARREADY;
 
   logic [DATA_WIDTH-1:0]   RDATA;
-  //logic [1:0]              RRESP;
+  logic [1:0]              RRESP;
   logic                    RLAST;
   logic                    RVALID;
   logic                    RREADY;
